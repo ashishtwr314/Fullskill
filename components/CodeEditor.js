@@ -6,7 +6,6 @@ import steps from "./steps";
 import "ace-builds/src-noconflict/mode-java";
 import "ace-builds/src-noconflict/theme-github";
 import "ace-builds/src-noconflict/ext-language_tools";
-import "shepherd.js/dist/css/shepherd.css";
 
 const tourOptions = {
   defaultStepOptions: {
@@ -167,46 +166,74 @@ function CodeEditor({ setActiveQues, question }) {
   return (
     <div>
       {/* <ShepherdTour steps={steps} tourOptions={tourOptions}> */}
-      <AceEditor
-        className="hero-welcome"
-        mode="python"
-        theme="xcode"
-        value={editorText}
-        onChange={(e) => setEditorText(e)}
-        name="UNIQUE_ID_OF_DIV"
-        editorProps={{ $blockScrolling: true }}
-      />
+      <div className="flex justify-between">
+        <div>
+          <div className="flex justify-between mb-5">
+            <button
+              className="border py-1 px-3"
+              onClick={() => {
+                setActiveQues((prev) => (prev == 0 ? 2 : prev - 1));
+              }}
+              type="button"
+            >
+              Prev
+            </button>
 
-      {explainingCode.response && (
-        <p>
-          <span style={{}}>&times;</span>
-          {!explainingCode.loading &&
-            explainingCode.response &&
-            explainingCode.response.data.choices[0].text}
-        </p>
-      )}
+            <button
+              className="border py-1 px-3"
+              onClick={() => {
+                setActiveQues((prev) => (prev == 2 ? 0 : prev + 1));
+              }}
+              type="button"
+            >
+              Next
+            </button>
+          </div>
+          <div className="max-h-[400px] overflow-scroll">
+            <AceEditor
+              className="hero-welcome "
+              mode="python"
+              theme="xcode"
+              value={editorText}
+              onChange={(e) => setEditorText(e)}
+              name="UNIQUE_ID_OF_DIV"
+              editorProps={{ $blockScrolling: true }}
+            />
+          </div>
 
-      <button onClick={() => compile()}>
-        {compiling ? "Please wait compiling" : "Compile"}
-      </button>
+          {explainingCode.response && (
+            <p>
+              <span style={{}}>&times;</span>
+              {!explainingCode.loading &&
+                explainingCode.response &&
+                explainingCode.response.data.choices[0].text}
+            </p>
+          )}
+        </div>
 
-      <button onClick={() => rewriteCode(question)}>
-        {rewriting.response !== null
-          ? rewriting.loading
-            ? "Please wait"
-            : "Not Satisfied ? Rewrite Again"
-          : rewriting.loading
-          ? "Please Wait"
-          : "Rewrite the code"}
-      </button>
-      <button
-        onClick={() => {
-          setActiveQues((prev) => (prev == 2 ? 0 : prev + 1));
-        }}
-        type="button"
-      >
-        Next
-      </button>
+        <div className="space-y-6 text-right mt-5">
+          <button
+            className="border py-1 px-3 border-[green]"
+            onClick={() => compile()}
+          >
+            {compiling ? "Please wait compiling" : "Compile"}
+          </button>
+          <br />
+
+          <button
+            className="border py-1 px-3"
+            onClick={() => rewriteCode(question)}
+          >
+            {rewriting.response !== null
+              ? rewriting.loading
+                ? "Please wait"
+                : "Rewrite Again"
+              : rewriting.loading
+              ? "Please Wait"
+              : "Rewrite the code"}
+          </button>
+        </div>
+      </div>
 
       {!response.err && response.output && (
         <button onClick={() => explainCode()} style={{ marginLeft: "10px" }}>
@@ -220,18 +247,33 @@ function CodeEditor({ setActiveQues, question }) {
         </button>
       )}
 
-      <h1>Result</h1>
-      <p style={{ color: response.err ? "red" : "black" }}>{response.output}</p>
+      {response.output && (
+        <>
+          <h1>Result</h1>
+          <p
+            style={{ color: response.err ? "red" : "black" }}
+            className="border p-2"
+          >
+            {response.output}
+          </p>
+        </>
+      )}
+
       {response.err && (
-        <button onClick={() => explainError(response)}>
-          {explaining.response !== null
-            ? explaining.loading
-              ? "Please wait"
-              : "Not Satisfied ? Explain Again"
-            : explaining.loading
-            ? "Please Wait"
-            : "Explain this error"}
-        </button>
+        <>
+          <button
+            className="border py-1 px-3 mt-2"
+            onClick={() => explainError(response)}
+          >
+            {explaining.response !== null
+              ? explaining.loading
+                ? "Please wait"
+                : "Not Satisfied ? Explain Again"
+              : explaining.loading
+              ? "Please Wait"
+              : "Explain this error"}
+          </button>
+        </>
       )}
 
       {explaining.response && (

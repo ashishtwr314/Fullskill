@@ -1,6 +1,6 @@
 import { Configuration, OpenAIApi } from "openai";
 
-const API_KEY = "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";
+const API_KEY = "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";
 const configuration = new Configuration({
   apiKey: API_KEY,
 });
