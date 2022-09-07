@@ -1,5 +1,5 @@
 import Layout from "../components/Layout/Layout";
-import useOpenAI from "../openai";
+import askAI from "../openai";
 import { useEffect, useState } from "react";
 import { reactInfo } from "../text";
 const textQues = [
@@ -40,7 +40,7 @@ export default function Code() {
       Errors if any in Candidates answer in points:
   `;
 
-    const resp = await useOpenAI(query);
+    const resp = await askAI(query);
     setQuesResp(resp.data.choices[0].text);
 
     setSubmittingAsnwer(false);

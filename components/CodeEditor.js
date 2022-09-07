@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import AceEditor from "react-ace";
-import useOpenAI from "../openai";
+import askAI from "../openai";
 import { ShepherdTour, ShepherdTourContext } from "react-shepherd";
 import steps from "./steps";
 import "ace-builds/src-noconflict/mode-java";
@@ -78,7 +78,7 @@ function CodeEditor({ setActiveQues, question }) {
 
     `;
 
-    const resp = await useOpenAI(query);
+    const resp = await askAI(query);
     setExplaining((x) => ({ ...x, response: resp, loading: false }));
   };
 
@@ -95,7 +95,7 @@ function CodeEditor({ setActiveQues, question }) {
       Explain this Program Please
     `;
 
-    const resp = await useOpenAI(query);
+    const resp = await askAI(query);
     console.log(resp);
     setExplainingCode((x) => ({ ...x, response: resp, loading: false }));
   };
@@ -121,7 +121,7 @@ function CodeEditor({ setActiveQues, question }) {
     const prompt = query.split("[insert]")[0];
     const suffix = query.split("[insert]")[1];
 
-    const resp = await useOpenAI(prompt, suffix);
+    const resp = await askAI(prompt, suffix);
 
     const string = skeletonForAi.replace("[insert]", resp.data.choices[0].text);
 

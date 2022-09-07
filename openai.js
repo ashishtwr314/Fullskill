@@ -6,7 +6,7 @@ const configuration = new Configuration({
 });
 const openai = new OpenAIApi(configuration);
 
-async function useOpenAI(prompt, suffix) {
+async function askAI(prompt, suffix) {
   return openai.createCompletion({
     model: "text-davinci-002",
     prompt: prompt,
@@ -19,4 +19,4 @@ async function useOpenAI(prompt, suffix) {
   });
 }
 
-export default useOpenAI;
+export default askAI;
