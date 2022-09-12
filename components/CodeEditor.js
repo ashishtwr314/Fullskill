@@ -112,7 +112,6 @@ function CodeEditor({
       e.cursor.document.$lines[e.cursor.row]
     );
 
-    console.log(isImmutable);
     setImmutable(isImmutable);
   };
 
@@ -126,7 +125,7 @@ function CodeEditor({
 
   return (
     <div>
-      {/* <ShepherdTour steps={steps} tourOptions={tourOptions}> */}
+      {console.log(process.env.NEXT_PUBLIC_API_KEY_OPENAI)}
       <div className="flex justify-between">
         <div className="max-w-[70%]">
           <div className="flex justify-between mb-5 ques-controls">
@@ -279,7 +278,6 @@ function CodeEditor({
           </div>
         )}
       </div>
-      {/* </ShepherdTour> */}
     </div>
   );
 }
