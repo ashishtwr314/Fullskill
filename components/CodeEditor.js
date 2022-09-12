@@ -1,11 +1,14 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import AceEditor from "react-ace";
 import askAI from "../openai";
-import { ShepherdTour, ShepherdTourContext } from "react-shepherd";
 import steps from "./steps";
-import "ace-builds/src-noconflict/mode-java";
-import "ace-builds/src-noconflict/theme-github";
-import "ace-builds/src-noconflict/ext-language_tools";
+import "ace-builds/src-noconflict/theme-chrome";
+import "ace-builds/src-noconflict/mode-python";
+import playIcon from "../icons/play.svg";
+import rewrite from "../icons/rewrite.svg";
+import explainIcon from "../icons/help.svg";
+import closeIcon from "../icons/close.svg";
+import Image from "next/image";
 
 const tourOptions = {
   defaultStepOptions: {
@@ -16,14 +19,20 @@ const tourOptions = {
   useModalOverlay: true,
 };
 
-function CodeEditor({ setActiveQues, question }) {
+function CodeEditor({
+  setActiveQues,
+  question,
+  response,
+  setResponse,
+  compile,
+  compiling,
+  explaining,
+  setExplaining,
+  explainError,
+}) {
   const [editorText, setEditorText] = React.useState(question.skeleton);
-  const [compiling, setCompiling] = React.useState(false);
-  const [response, setResponse] = React.useState({ err: false, output: "" });
-  const [explaining, setExplaining] = useState({
-    loading: false,
-    response: null,
-  });
+  const [immutable, setImmutable] = useState(false);
+  const editorRef = useRef();
 
   const [explainingCode, setExplainingCode] = useState({
     loading: false,
@@ -38,49 +47,6 @@ function CodeEditor({ setActiveQues, question }) {
   useEffect(() => {
     setEditorText(question.skeleton);
   }, [question]);
-
-  const compile = () => {
-    setCompiling(true);
-    // Logic to compile the code
-
-    fetch("/api/python", {
-      method: "POST",
-      body: editorText,
-    })
-      .then((res) => {
-        return res.json();
-      })
-      .then((res) => {
-        setResponse(res);
-      })
-      .catch((err) => {
-        setResponse({ err: true, output: "Something went wrong" });
-        console.log("ERROR", err);
-      })
-      .finally(() => {
-        setCompiling(false);
-      });
-  };
-
-  const explainError = async (response) => {
-    setExplaining((x) => ({ ...x, loading: true }));
-    const query = `
-      Question: 
-      ${question.ques}
-
-      Program:
-      ${editorText}
-
-      Error: 
-      ${response.output}
-
-      Explain this Error Please
-
-    `;
-
-    const resp = await askAI(query);
-    setExplaining((x) => ({ ...x, response: resp, loading: false }));
-  };
 
   const explainCode = async (response) => {
     setExplainingCode((x) => ({ ...x, loading: true }));
@@ -97,6 +63,7 @@ function CodeEditor({ setActiveQues, question }) {
 
     const resp = await askAI(query);
     console.log(resp);
+
     setExplainingCode((x) => ({ ...x, response: resp, loading: false }));
   };
 
@@ -140,35 +107,29 @@ function CodeEditor({ setActiveQues, question }) {
     }
   }, [editorText]);
 
-  const tour = useContext(ShepherdTourContext);
-
-  function Editor() {
-    const tour = useContext(ShepherdTourContext);
-
-    useEffect(() => {
-      if (tour) tour.start();
-      console.log("🤮");
-    }, [tour]);
-
-    return (
-      <AceEditor
-        className="hero-welcome"
-        mode="python"
-        theme="xcode"
-        value={editorText}
-        onChange={(e) => setEditorText(e)}
-        name="UNIQUE_ID_OF_DIV"
-        editorProps={{ $blockScrolling: true }}
-      />
+  const handleCursorChange = (e, event) => {
+    const isImmutable = question.immutablelines.includes(
+      e.cursor.document.$lines[e.cursor.row]
     );
-  }
+
+    console.log(isImmutable);
+    setImmutable(isImmutable);
+  };
+
+  const handleEditorChange = (text, event) => {
+    if (immutable) {
+      null;
+    } else {
+      setEditorText(text);
+    }
+  };
 
   return (
     <div>
       {/* <ShepherdTour steps={steps} tourOptions={tourOptions}> */}
       <div className="flex justify-between">
-        <div>
-          <div className="flex justify-between mb-5">
+        <div className="max-w-[70%]">
+          <div className="flex justify-between mb-5 ques-controls">
             <button
               className="border py-1 px-3"
               onClick={() => {
@@ -189,66 +150,98 @@ function CodeEditor({ setActiveQues, question }) {
               Next
             </button>
           </div>
-          <div className="max-h-[400px] overflow-scroll">
+          <div className="max-h-[400px] overflow-scroll code-editor border overflow-x-hidden">
             <AceEditor
-              className="hero-welcome "
+              onCursorChange={(e, event) => handleCursorChange(e, event)}
+              // onSelectionChange={(e) => console.log(e)}
+              ref={editorRef}
               mode="python"
-              theme="xcode"
+              theme="chrome"
               value={editorText}
-              onChange={(e) => setEditorText(e)}
+              onChange={(text, e) => handleEditorChange(text, e)}
               name="UNIQUE_ID_OF_DIV"
               editorProps={{ $blockScrolling: true }}
             />
           </div>
 
           {explainingCode.response && (
-            <p>
-              <span style={{}}>&times;</span>
-              {!explainingCode.loading &&
-                explainingCode.response &&
-                explainingCode.response.data.choices[0].text}
+            <p className="border p-2 my-2 relative">
+              <span
+                onClick={() =>
+                  setExplainingCode((x) => ({
+                    ...x,
+                    response: "",
+                  }))
+                }
+                className="absolute cursor-pointer -right-2 -top-2"
+              >
+                <Image src={closeIcon} height={17} alt="closeicon" />
+              </span>
+              <span>
+                {!explainingCode.loading &&
+                  explainingCode.response &&
+                  explainingCode.response.data.choices[0].text}
+              </span>
             </p>
           )}
         </div>
 
-        <div className="space-y-6 text-right mt-5">
-          <button
-            className="border py-1 px-3 border-[green]"
-            onClick={() => compile()}
-          >
-            {compiling ? "Please wait compiling" : "Compile"}
-          </button>
-          <br />
+        <div className="max-w-[30%] space-y-6 text-right mt-5 editor-controls flex-col items-end ">
+          <div>
+            <button
+              className="border py-1 px-3  editor-controls__compile  flex items-center justify-center  space-x-3 w-full text-center shadow-md"
+              onClick={() => compile(editorText)}
+            >
+              <Image src={playIcon} alt="playicon" />
 
-          <button
-            className="border py-1 px-3"
-            onClick={() => rewriteCode(question)}
-          >
-            {rewriting.response !== null
-              ? rewriting.loading
-                ? "Please wait"
-                : "Rewrite Again"
-              : rewriting.loading
-              ? "Please Wait"
-              : "Rewrite the code"}
-          </button>
+              <span>{compiling ? "Compiling" : "Play"}</span>
+            </button>
+          </div>
+
+          <div>
+            <button
+              className="border py-1 px-3 editor-controls__rewrite flex items-center justify-center  space-x-3 w-full text-center  shadow-md"
+              onClick={() => rewriteCode(question)}
+            >
+              <Image src={rewrite} height={17} alt="wirete" />
+
+              <span>
+                {rewriting.response !== null
+                  ? rewriting.loading
+                    ? "Please wait"
+                    : "Rewrite Again"
+                  : rewriting.loading
+                  ? "Please Wait"
+                  : "Rewrite"}
+              </span>
+            </button>
+          </div>
+
+          <div>
+            {!response.err && response.output && (
+              <button
+                className="border py-1 px-3 editor-controls__rewrite flex items-center justify-center  space-x-3 w-full text-center  shadow-md"
+                onClick={() => explainCode()}
+              >
+                <Image src={explainIcon} height={17} alt="wirete" />
+                <span>
+                  {" "}
+                  {explainingCode.response !== null
+                    ? explainingCode.loading
+                      ? "Explaining..."
+                      : "Explain Again"
+                    : explainingCode.loading
+                    ? "Explanation..."
+                    : "Explain the code"}
+                </span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
-      {!response.err && response.output && (
-        <button onClick={() => explainCode()} style={{ marginLeft: "10px" }}>
-          {explainingCode.response !== null
-            ? explainingCode.loading
-              ? "Loading Explanation..."
-              : "Not Satisfied ? Explain Again"
-            : explainingCode.loading
-            ? "Loading Explanation"
-            : "Explain the code"}
-        </button>
-      )}
-
       {response.output && (
-        <>
+        <div className="editor-result">
           <h1>Result</h1>
           <p
             style={{ color: response.err ? "red" : "black" }}
@@ -256,13 +249,13 @@ function CodeEditor({ setActiveQues, question }) {
           >
             {response.output}
           </p>
-        </>
+        </div>
       )}
 
       {response.err && (
         <>
           <button
-            className="border py-1 px-3 mt-2"
+            className="border py-1 px-3 mt-2 explain-err-btn"
             onClick={() => explainError(response)}
           >
             {explaining.response !== null
@@ -276,14 +269,16 @@ function CodeEditor({ setActiveQues, question }) {
         </>
       )}
 
-      {explaining.response && (
-        <div style={{ marginTop: "20px" }}>
-          Explaination:
-          {!explaining.loading &&
-            explaining.response &&
-            explaining.response.data.choices[0].text}
-        </div>
-      )}
+      <div className="explain-err-div">
+        {explaining.response && (
+          <div style={{ marginTop: "20px" }}>
+            Explaination:
+            {!explaining.loading &&
+              explaining.response &&
+              explaining.response.data.choices[0].text}
+          </div>
+        )}
+      </div>
       {/* </ShepherdTour> */}
     </div>
   );
