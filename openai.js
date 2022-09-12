@@ -1,12 +1,12 @@
 import { Configuration, OpenAIApi } from "openai";
 
-const API_KEY =
-  process.env.API_KEY_OPENAI ||
-  "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";
+const API_KEY = process.env.API_KEY_OPENAI;
 const configuration = new Configuration({
   apiKey: API_KEY,
 });
 const openai = new OpenAIApi(configuration);
+
+console.log("API _ KEY", API_KEY);
 
 async function askAI(prompt, suffix) {
   return openai.createCompletion({
