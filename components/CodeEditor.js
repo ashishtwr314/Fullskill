@@ -125,7 +125,6 @@ function CodeEditor({
 
   return (
     <div>
-      {console.log(process.env.NEXT_PUBLIC_API_KEY_OPENAI)}
       <div className="flex justify-between">
         <div className="max-w-[70%]">
           <div className="flex justify-between mb-5 ques-controls">
