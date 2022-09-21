@@ -1,4 +1,5 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
+const child = require("child_process");
 import { PythonShell } from "python-shell";
 
 export default function handler(req, res) {
